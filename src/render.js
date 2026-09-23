@@ -22,7 +22,7 @@ export class Renderer {
     this.quad(x0,-126,x1,-84,COLORS.sidewalk);this.quad(x0,84,x1,126,COLORS.sidewalk);
     this.quad(x0,-84,x1,84,COLORS.roadEdge);this.quad(x0,-77,x1,77,COLORS.road);
     for(let x=Math.floor(x0/85)*85;x<x1;x+=85){this.quad(x,-2,x+37,2,'#96937c');}
-    for(let lot=0;lot<8;lot++){
+    for(let lot=Math.max(0,Math.floor((world.player.x-700)/740));lot<=Math.ceil((world.player.x+1300)/740);lot++){
       const x=lot*740+165;
       this.quad(x,-270,x+69,-78,'#7c806b');this.quad(x,78,x+69,270,'#7c806b');
       this.quad(x+2,-267,x+67,-84,'#a29e87');this.quad(x+2,84,x+67,267,'#a29e87');
@@ -104,7 +104,7 @@ export class Renderer {
     const g=this.g,q=this.point(p.x,p.y),x=q.x,y=q.y;
     rect(g,x-21,y-5,43,5,'#344947');
     if(p.crash>0){rect(g,x-24,y-13,39,8,'#b17569');rect(g,x-10,y-23,12,11,'#dfb29a');return;}
-    g.save();g.translate(Math.round(x),Math.round(y));g.rotate(clamp(p.angle,-.4,.4));
+    g.save();g.translate(Math.round(x),Math.round(y));g.rotate(-.24+clamp(p.angle,-.4,.4));
     for(const ox of [-15,17]){g.strokeStyle='#252e36';g.lineWidth=4;g.beginPath();g.arc(ox,-8,9,0,Math.PI*2);g.stroke();rect(g,ox-2,-16,4,16,'#809194');}
     line(g,-15,-8,1,-24,'#c2bc9d',3);line(g,1,-24,17,-8,'#c2bc9d',3);line(g,17,-8,-15,-8,'#c2bc9d',2);
     line(g,14,-26,23,-28,'#ded0a8',3);line(g,-5,-22,6,-22,'#353e48',4);
@@ -118,7 +118,7 @@ export class Renderer {
     this.ground(w);
     for(const h of w.hazards){const p=this.point(h.x,h.y);g.fillStyle=h.kind==='water'?'#74b3b8aa':'#817a6999';g.beginPath();g.ellipse(p.x,p.y,h.radius*.85,h.radius*.35,0,0,Math.PI*2);g.fill();if(h.kind==='water')for(let i=0;i<5;i++)rect(g,p.x-30+i*13,p.y-4+(i%2)*7,8,2,'#c5dbce');}
     const sprites=[];
-    for(let i=0;i<7;i++)for(const side of [-1,1]){const x=350+i*740,y=side*255;sprites.push({y:this.point(x,y).y,draw:()=>this.house(x,y,i+side+8)});}
+    for(let i=Math.max(0,Math.floor((w.player.x-700)/740));i<=Math.ceil((w.player.x+1300)/740);i++)for(const side of [-1,1]){const x=350+i*740,y=side*255;sprites.push({y:this.point(x,y).y,draw:()=>this.house(x,y,i+side+8)});}
     for(const o of w.objects)sprites.push({y:this.point(o.x,o.y).y,draw:()=>this.object(o)});
     for(const p of w.people)sprites.push({y:this.point(p.x,p.y).y,draw:()=>this.person(p)});
     for(const d of w.dogs)if(d.active||Math.abs(d.x-w.player.x)<350)sprites.push({y:this.point(d.x,d.y).y,draw:()=>this.dog(d)});

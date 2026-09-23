@@ -13,7 +13,7 @@ function togglePause(){if(state==='playing'){state='paused';world.paused=true;}e
 function report(){state='results';const r=world.report(),fields=[['PROPERTY DAMAGE','$'+scoreFormat(r.damage)],['ARCADE SCORE',scoreFormat(r.score)],['LONGEST COMBO','x'+r.longestCombo],['LARGEST CHAIN','$'+scoreFormat(r.largestChain)],['INDIRECT DAMAGE','$'+scoreFormat(r.indirectDamage)],['MAILBOXES DESTROYED',r.stats.mailboxes],['WINDOWS BROKEN',r.stats.windows],['VEHICLES DAMAGED',r.stats.vehicles],['TOTAL OBJECTS',r.stats.objects],['PATROLS WRECKED',r.stats.police],['INSURANCE CLAIMS',r.claims],['NEIGHBORHOOD APPROVAL',r.approval+'%']];$('report').replaceChildren(...fields.map(([a,b])=>{const div=document.createElement('div'),label=document.createElement('span'),value=document.createElement('b');label.textContent=a;value.textContent=b;div.append(label,value);return div;}));$('resultQuote').textContent=r.damage>12000?'“WE HAVE RECONSIDERED YOUR COVERAGE.”':'“PLEASE KEEP YOUR RECEIPTS.”';panels();}
 function orientation(){if(screen.orientation?.lock){screen.orientation.lock('landscape').catch(()=>{});} $('rotate').classList.toggle('hidden',innerWidth>=innerHeight);}
 async function fullscreen(){try{if(!document.fullscreenElement)await $('shell').requestFullscreen();else await document.exitFullscreen();}catch{}orientation();}
-document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'){usingTouch=true;gamepadActive=false;panels();}},{passive:true});
+document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'){usingTouch=true;gamepadActive=false;mouseAim=null;panels();}},{passive:true});
 $('start').onclick=begin;$('again').onclick=begin;$('restartPause').onclick=begin;$('pause').onclick=togglePause;$('resume').onclick=togglePause;
 document.querySelectorAll('.fullscreen').forEach(b=>b.onclick=fullscreen);
 document.addEventListener('fullscreenchange',orientation);window.addEventListener('resize',orientation);orientation();
@@ -30,7 +30,11 @@ function stick(id,key,fireOnRelease=false){const el=$(id),nub=el.querySelector('
   function move(e){const r=el.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,limit=r.width*.38,len=Math.hypot(dx,dy),scale=Math.min(1,limit/(len||1));touch[key]={x:dx*scale/limit,y:dy*scale/limit};nub.style.transform=`translate(${dx*scale}px,${dy*scale}px)`;if(len>12)moved=true;}
   el.addEventListener('pointerdown',e=>{usingTouch=true;gamepadActive=false;pointer=e.pointerId;moved=false;el.setPointerCapture(pointer);move(e);panels();e.preventDefault();});
   el.addEventListener('pointermove',e=>{if(e.pointerId===pointer)move(e);});
-  const end=e=>{if(e.pointerId!==pointer)return;if(fireOnRelease&&moved&&state==='playing')world.throw();pointer=null;touch[key]={x:0,y:0};nub.style.transform='';};
+  const end=e=>{if(e.pointerId!==pointer)return;if(fireOnRelease&&moved&&state==='playing'){
+    // Capture the final touch direction even if release occurs between two frames.
+    const a=unproject(touch.aim.x,touch.aim.y),length=Math.hypot(a.x,a.y);
+    if(length>.01){world.player.aim={x:a.x/length,y:a.y/length};world.throw();}
+  }pointer=null;touch[key]={x:0,y:0};nub.style.transform='';};
   el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
 }
 stick('moveStick','move');stick('aimStick','aim',true);

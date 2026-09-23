@@ -2,8 +2,10 @@ import {LENGTH, ROUTE_SECONDS, BOUNDS, TYPES, WEAPONS, PEOPLE, HEAT, EVENTS, mak
 
 export const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
 export const distance = (a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-export const project = (x,y)=>({x:(x-y)*.84,y:(x+y)*.43});
-export const unproject = (x,y)=>({x:x/(2*.84)+y/(2*.43),y:y/(2*.43)-x/(2*.84)});
+// Forward along the route travels up and right, as in a 3/4 arcade street.
+// The inverse maps screen-relative sticks and mouse aim back into world space.
+export const project = (x,y)=>({x:(x+y)*.84,y:(y-x)*.43});
+export const unproject = (x,y)=>({x:x/(2*.84)-y/(2*.43),y:x/(2*.84)+y/(2*.43)});
 
 export class World {
   constructor() { this.reset(); }
@@ -12,7 +14,7 @@ export class World {
     this.objects=level.objects.map(o=>({...o,hp:TYPES[o.type].hp,broken:false,velocity:null,credit:null,damageTaken:0,reacted:false}));
     this.people=level.people.map((p,i)=>({...p,id:`person-${i}`,state:'idle',vx:0,vy:0,credit:null,phase:i*1.73}));
     this.dogs=level.dogs.map((d,i)=>({...d,id:i,active:false,stun:0,phase:i}));
-    this.player={x:85,y:0,speed:34,side:0,angle:0,crash:0,invuln:0,aim:{x:1,y:0},throwCooldown:0,weapon:'paper',skid:0};
+    this.player={x:85,y:0,speed:86,side:0,angle:0,crash:0,invuln:0,aim:{x:1,y:0},throwCooldown:0,weapon:'paper',skid:0};
     this.projectiles=[]; this.particles=[]; this.hazards=[];
     this.time=0;this.remaining=ROUTE_SECONDS;this.finished=false;this.paused=false;
     this.score=0;this.damage=0;this.indirectDamage=0;this.combo=0;this.longestCombo=0;
@@ -90,8 +92,8 @@ export class World {
   }
   crash(reason='WIPEOUT!'){
     const p=this.player;if(p.invuln>0||p.crash>0)return;
-    p.crash=1.3;p.invuln=3;p.speed=8;p.side=0;this.combo=0;this.comboTimer=0;
-    this.remaining=Math.max(0,this.remaining-2);this.say(reason,p.x,p.y,'#f3a997');this.burst(p.x,p.y,'#d8b8a3',13);
+    p.crash=.8;p.invuln=2.2;p.speed=24;p.side=0;this.combo=0;this.comboTimer=0;
+    this.remaining=Math.max(0,this.remaining-.75);this.say(reason,p.x,p.y,'#f3a997');this.burst(p.x,p.y,'#d8b8a3',13);
   }
   update(dt,input={}) {
     if(this.finished||this.paused)return;
@@ -100,22 +102,27 @@ export class World {
     const steer=clamp(input.steer||0,-1,1), throttle=clamp(input.throttle||0,-1,1), braking=!!input.brake;
     if(input.aim&&Math.hypot(input.aim.x,input.aim.y)>.25){const len=Math.hypot(input.aim.x,input.aim.y);p.aim={x:input.aim.x/len,y:input.aim.y/len};}
     if(p.crash<=0){
-      const target=braking?12:(input.boost?62:throttle<-.35?23:39)+Math.max(0,throttle)*7;
-      p.speed+=(target-p.speed)*Math.min(1,dt*(braking?3.7:1.1));
-      const desired=steer*(braking?58:105)*(.62+p.speed/65);
-      p.side+=(desired-p.side)*Math.min(1,dt*(braking?2.5:1.6));
-      if(braking&&Math.abs(p.side)>38){p.skid=.35;if(Math.random()<dt*15)this.burst(p.x,p.y,'#b1a5a0',1);}
+      // Stick/keyboard directions are screen-relative. A press to the right must
+      // actually add rightward screen velocity; auto-forward keeps the route moving.
+      const control=unproject(steer*62,-throttle*62);
+      const forward=braking?31:(input.boost?132:92);
+      const responsiveness=braking?8:6.5;
+      const targetX=Math.max(14,forward+control.x*(braking?.55:1));
+      const targetY=control.y*(braking?.55:1);
+      p.speed+=(targetX-p.speed)*Math.min(1,dt*responsiveness);
+      p.side+=(targetY-p.side)*Math.min(1,dt*responsiveness);
+      if(braking&&Math.abs(p.side)>15){p.skid=.35;if(Math.random()<dt*15)this.burst(p.x,p.y,'#b1a5a0',1);}
       p.skid=Math.max(0,p.skid-dt);
       p.y=clamp(p.y+p.side*dt,BOUNDS.minY,BOUNDS.maxY);
-      p.x+=p.speed*dt;p.angle+=(p.side/120-p.angle)*Math.min(1,dt*4);
+      p.x+=p.speed*dt;p.angle+=(p.side/110-p.angle)*Math.min(1,dt*5);
       const curb=Math.min(Math.abs(Math.abs(p.y)-87),Math.abs(Math.abs(p.y)-122));
-      if(curb<7&&Math.abs(p.side)>55&&p.speed>52){p.speed*=.99;p.skid=.2;}
+      if(curb<7&&Math.abs(p.side)>35&&p.speed>80){p.speed*=.985;p.skid=.2;}
       if(Math.abs(p.y)>230&&p.x%740>220&&p.x%740<590)this.crash('FRONT PORCH!');
     }
     if(input.throw)this.throw();
     for(const o of this.objects){
-      if(Math.abs(o.x-p.x)<45&&distance(p,o)<TYPES[o.type].radius+12&&!o.broken&&p.speed>28){
-        this.hit(o,p.speed>49?2:1,this.chain(),false,p);
+      if(Math.abs(o.x-p.x)<45&&distance(p,o)<TYPES[o.type].radius+12&&!o.broken&&p.speed>32){
+        this.hit(o,p.speed>110?2:1,this.chain(),false,p);
         if(TYPES[o.type].mass>=6)this.crash('HANDLEBARS OVER!');else p.speed*=.8;
       }
     }

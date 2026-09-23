@@ -16,7 +16,7 @@ Open `http://localhost:8080` in a desktop browser. To play on Android, serve on 
 
 | Action | Desktop | Controller | Touch |
 | --- | --- | --- | --- |
-| Steer / pedal | WASD or arrows | Left stick / D-pad | Left virtual stick |
+| Ride in the onscreen direction | WASD or arrows | Left stick / D-pad | Left virtual stick |
 | Aim independently | Mouse or I J K L | Right stick | Right virtual stick |
 | Throw | Left click or Space | Right trigger | Release right virtual stick |
 | Brake / skid | Shift | Left trigger | BRAKE |
@@ -24,7 +24,7 @@ Open `http://localhost:8080` in a desktop browser. To play on Android, serve on 
 | Switch paper / bowling ball | Q / E | Y / north face button or shoulders | SWITCH |
 | Pause | Esc / P | Start | Pause button |
 
-The bike maintains forward speed without holding a direction. Ride off the road across sidewalks and driveways and into yards; houses can cause wipeouts. Crashes cost a little time and recover automatically. The route ends after about 2–3 minutes or when the timer expires. Aim at the bin by the first parked car to discover a long chain.
+The bike travels diagonally up and right without holding a direction. Press a direction to shift its onscreen path; up also pedals faster and down slows its forward motion. Brake for a slow, precise turn or burst for extra speed. Ride off the road across sidewalks and driveways and into yards; houses can cause wipeouts. Crashes briefly slow the rider and recover automatically. The route lasts about 2–3 minutes or ends when the timer expires. Aim at the bin by the first parked car to discover a long chain.
 
 ## Structure
 

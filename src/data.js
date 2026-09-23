@@ -1,4 +1,4 @@
-export const LENGTH = 5200;
+export const LENGTH = 11200;
 export const ROUTE_SECONDS = 165;
 export const BOUNDS = {minY:-270,maxY:300};
 
@@ -41,18 +41,18 @@ export const EVENTS = {
 // The first lot is a teaching opportunity; its actors are spatially arranged to allow
 // a rolling bin to make a car swerve into a hydrant, then water to move a resident/cart.
 const first = [
-  ['trash',330,-55], ['car',405,22], ['hydrant',475,111], ['cart',525,152],
+  ['trash',330,-55], ['car',405,62], ['hydrant',475,111], ['cart',525,152],
   ['fence',585,177], ['flamingo',612,192], ['window',640,225],
 ];
 const pattern = [
   ['mailbox',80,-133],['mailbox',190,130],['window',235,-214],['window',265,237],
   ['fence',270,175],['flamingo',155,-190],['sign',325,-130],['trash',330,132],
-  ['mower',395,-195],['car',425,-42],['hydrant',520,120],['materials',570,-198],
-  ['cart',610,170],['fence',660,186],['van',750,50],['mailbox',790,-135],
+  ['mower',395,-195],['car',425,-65],['hydrant',520,120],['materials',570,-198],
+  ['cart',610,170],['fence',660,186],['van',750,68],['mailbox',790,-135],
 ];
 export function makeLevel() {
   const objects = first.map(([type,x,y],i)=>({id:`intro-${i}`,type,x,y,lot:0}));
-  for (let lot=0; lot<6; lot++) for (let i=0;i<pattern.length;i++) {
+  for (let lot=0; lot<14; lot++) for (let i=0;i<pattern.length;i++) {
     const [type,dx,y] = pattern[i];
     const x = 760 + lot*740 + dx;
     if (x > LENGTH - 90) continue;
@@ -60,8 +60,8 @@ export function makeLevel() {
   }
   const people = [
     {x:527,y:154,kind:'cart'}, {x:720,y:-210,kind:'porch'}, {x:890,y:170,kind:'walker'},
-    ...Array.from({length:6},(_,i)=>({x:1120+i*730,y:i%2? -210:215,kind:['mower','washer','groceries','porch','cart','walker'][i]})),
+    ...Array.from({length:14},(_,i)=>({x:1120+i*730,y:i%2? -210:215,kind:['mower','washer','groceries','porch','cart','walker'][i%6]})),
   ];
-  const dogs = [1080,2050,2940,3860,4680].map((x,i)=>({x,y:i%2? -185:195}));
+  const dogs = Array.from({length:9},(_,i)=>({x:1080+i*1160,y:i%2? -185:195}));
   return {objects,people,dogs};
 }
