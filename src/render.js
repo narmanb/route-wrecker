@@ -116,9 +116,9 @@ export class Renderer {
     const g=this.g;g.clearRect(0,0,W,H);
     this.camera.x+=(w.player.x+40-this.camera.x)*.13;this.camera.y+=(w.player.y*.38-this.camera.y)*.08;
     this.ground(w);
-    for(let i=0;i<7;i++)for(const side of [-1,1])this.house(350+i*740,side*255,i+side+8);
     for(const h of w.hazards){const p=this.point(h.x,h.y);g.fillStyle=h.kind==='water'?'#74b3b8aa':'#817a6999';g.beginPath();g.ellipse(p.x,p.y,h.radius*.85,h.radius*.35,0,0,Math.PI*2);g.fill();if(h.kind==='water')for(let i=0;i<5;i++)rect(g,p.x-30+i*13,p.y-4+(i%2)*7,8,2,'#c5dbce');}
     const sprites=[];
+    for(let i=0;i<7;i++)for(const side of [-1,1]){const x=350+i*740,y=side*255;sprites.push({y:this.point(x,y).y,draw:()=>this.house(x,y,i+side+8)});}
     for(const o of w.objects)sprites.push({y:this.point(o.x,o.y).y,draw:()=>this.object(o)});
     for(const p of w.people)sprites.push({y:this.point(p.x,p.y).y,draw:()=>this.person(p)});
     for(const d of w.dogs)if(d.active||Math.abs(d.x-w.player.x)<350)sprites.push({y:this.point(d.x,d.y).y,draw:()=>this.dog(d)});

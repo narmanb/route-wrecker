@@ -11,7 +11,7 @@ export class World {
     const level=makeLevel();
     this.objects=level.objects.map(o=>({...o,hp:TYPES[o.type].hp,broken:false,velocity:null,credit:null,damageTaken:0,reacted:false}));
     this.people=level.people.map((p,i)=>({...p,id:`person-${i}`,state:'idle',vx:0,vy:0,credit:null,phase:i*1.73}));
-    this.dogs=level.dogs.map((d,i)=>({...d,id:i,active:false,phase:i}));
+    this.dogs=level.dogs.map((d,i)=>({...d,id:i,active:false,stun:0,phase:i}));
     this.player={x:85,y:0,speed:34,side:0,angle:0,crash:0,invuln:0,aim:{x:1,y:0},throwCooldown:0,weapon:'paper',skid:0};
     this.projectiles=[]; this.particles=[]; this.hazards=[];
     this.time=0;this.remaining=ROUTE_SECONDS;this.finished=false;this.paused=false;
@@ -21,7 +21,7 @@ export class World {
     this.vehicleHits=new Set();this.eventCounts=new Map();this.policeSpawned=false;
   }
   say(label,x=this.player.x,y=this.player.y,color='#f1d898') {this.messages.push({label,x,y,color,life:2.2});if(this.messages.length>12)this.messages.shift();}
-  chain() {const id=++this.chainCounter;this.chains.set(id,{damage:0,count:0,mail:0,windows:0,cars:0,lots:new Set(),indirect:0,events:new Set()});return id;}
+  chain() {const id=++this.chainCounter;this.chains.set(id,{damage:0,count:0,mail:0,windows:0,cars:new Set(),lots:new Set(),indirect:0,events:new Set()});return id;}
   event(name,chain,x,y) {
     const c=this.chains.get(chain); if(c?.events.has(name))return;
     c?.events.add(name);this.eventCounts.set(name,(this.eventCounts.get(name)||0)+1);
@@ -29,11 +29,12 @@ export class World {
   }
   hit(o,amount,credit,indirect=false,source=null) {
     if (!o || o.broken || !credit || amount<=0)return false;
-    const t=TYPES[o.type];o.credit=credit;o.hp-=amount;o.damageTaken+=amount;
+    const t=TYPES[o.type],effective=Math.min(amount,o.hp);o.credit=credit;o.hp-=effective;o.damageTaken+=effective;
     if (o.type==='car'||o.type==='van') {
       if(!this.vehicleHits.has(o.id)) {this.vehicleHits.add(o.id);this.stats.vehicles++;}
-      this.damage+=Math.round(t.value*Math.min(amount,t.hp)/t.hp);
-      const c=this.chains.get(credit);if(c){c.damage+=Math.round(t.value*Math.min(amount,t.hp)/t.hp);c.cars++;}
+      const vehicleDamage=Math.round(t.value*o.damageTaken/t.hp)-Math.round(t.value*(o.damageTaken-effective)/t.hp);
+      this.damage+=vehicleDamage;if(indirect)this.indirectDamage+=vehicleDamage;
+      const c=this.chains.get(credit);if(c){c.damage+=vehicleDamage;c.cars.add(o.id);if(indirect)c.indirect++;this.largestChain=Math.max(this.largestChain,c.damage);}
       if(!o.reacted){o.reacted=true;o.velocity={x:65,y:o.y<0?-35:76,life:3.5,kind:'vehicle',hit:new Set()};this.say('DRIVER PANICS',o.x,o.y);}
     }
     if(o.hp>0){this.say('CRACK!',o.x,o.y);return false;}
@@ -56,7 +57,7 @@ export class World {
       if(c.indirect>=1)this.event('domino',credit,o.x,o.y);
       if(c.mail>=3)this.event('mail',credit,o.x,o.y);
       if(c.windows>=2)this.event('windows',credit,o.x,o.y);
-      if(c.cars>=2)this.event('cars',credit,o.x,o.y);
+      if(c.cars.size>=2)this.event('cars',credit,o.x,o.y);
       if(c.damage>=11000&&c.indirect>=3)this.event('loss',credit,o.x,o.y);
       if(c.lots.size>=3)this.event('menace',credit,o.x,o.y);
     }
@@ -184,14 +185,14 @@ export class World {
         if(distance(p,n)<17&&this.heat>=3)this.crash('NEIGHBORLY WELCOME!');
       } else if(n.state==='idle'&&PEOPLE[n.kind].speed){n.x+=Math.sin(n.phase*.7)*PEOPLE[n.kind].speed*dt;n.y+=Math.cos(n.phase*.6)*PEOPLE[n.kind].speed*dt*.3;}
     }
-    for(const d of this.dogs)if(d.active){d.x+=clamp(p.x-d.x,-1,1)*43*dt;d.y+=clamp(p.y-d.y,-1,1)*43*dt;if(distance(d,p)<18)this.crash('DOGGONE IT!');}
+    for(const d of this.dogs){d.stun=Math.max(0,d.stun-dt);if(d.active&&d.stun===0){d.x+=clamp(p.x-d.x,-1,1)*43*dt;d.y+=clamp(p.y-d.y,-1,1)*43*dt;if(distance(d,p)<18){this.crash('DOGGONE IT!');d.stun=8;d.y=d.y<0?-190:190;}}}
   }
   updateHeat(dt){
     this.heatPoints=Math.max(0,this.heatPoints-dt*22);
     const next=HEAT.reduce((n,threshold,i)=>this.heatPoints>=threshold?i:n,0);
     if(next>this.heat)this.say(`HEAT ${next}: ${['','CURTAINS TWITCH','DOGS LOOSE','BLOCKADE','PATROL','THE WHOLE BLOCK'][next]}`);
     this.heat=next;
-    if(this.heat>=2)for(const d of this.dogs)if(Math.abs(d.x-this.player.x)<360)d.active=true;
+    for(const d of this.dogs)d.active=this.heat>=2&&d.stun===0&&Math.abs(d.x-this.player.x)<360;
     if(this.heat>=4&&!this.policeSpawned){
       this.policeSpawned=true;this.objects.push({id:'patrol',type:'van',x:this.player.x+300,y:20,lot:99,hp:4,broken:false,velocity:{x:-20,y:0,life:9,kind:'vehicle',hit:new Set()},credit:null,damageTaken:0,reacted:true,police:true});
       this.say('PATROL ARRIVES');
