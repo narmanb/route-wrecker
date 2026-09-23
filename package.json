@@ -1,0 +1,11 @@
+{
+  "name": "route-wrecker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/game.js && node --check src/render.js && node --check src/systems.js && npm test"
+  }
+}

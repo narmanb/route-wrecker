@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#293b40"><title>Route Wrecker</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <main id="shell">
+    <canvas id="scene" width="960" height="540" aria-label="Isometric suburban bicycle game"></canvas>
+    <div id="vignette"></div>
+    <header id="hud" class="hidden">
+      <div class="brand">ROUTE <b>WRECKER</b><small>QUIET SUBURB / ROUTE 01</small></div>
+      <div class="metric">ARCADE SCORE<strong id="score">000000</strong></div>
+      <div class="metric">PROPERTY DAMAGE<strong id="damage">$0</strong></div>
+      <div class="metric small">TIME<strong id="timer">2:45</strong></div>
+      <button id="pause" class="utility" aria-label="Pause">Ⅱ</button>
+    </header>
+    <div id="bottom" class="hidden"><span id="combo"></span><span id="heat"></span><span id="weapon"></span><span id="progress"></span></div>
+    <section id="title" class="panel">
+      <div class="eyebrow">PRESENTED BY THE NEIGHBORHOOD WATCH · 199X</div>
+      <h1>ROUTE<br><em>WRECKER</em></h1>
+      <p>THEY REPORTED YOUR PAPER ROUTE.<br>YOU FILED A COUNTERCLAIM.</p>
+      <div class="buttons"><button id="start" class="primary">RIDE THE ROUTE</button><button class="fullscreen">⛶ FULLSCREEN</button></div>
+      <div class="instructions">LEFT STICK / WASD: STEER & PEDAL &nbsp;·&nbsp; RIGHT STICK / MOUSE: AIM<br>RT / CLICK / SPACE: THROW &nbsp;·&nbsp; LT / SHIFT: BRAKE &nbsp;·&nbsp; A: BURST &nbsp;·&nbsp; Y / Q: SWITCH</div>
+      <div class="tagline">“THE LAWNS ARE PERFECT. THE NEIGHBORS AREN'T.”</div>
+    </section>
+    <section id="pausePanel" class="panel hidden"><div class="eyebrow">A BRIEF RESPITE FROM PROPERTY LOSS</div><h2>ROUTE PAUSED</h2><div class="buttons"><button id="resume" class="primary">RESUME</button><button class="fullscreen">⛶ FULLSCREEN</button><button id="restartPause">RESTART</button></div><p>ESC / START TO RESUME</p></section>
+    <section id="results" class="panel hidden"><div class="eyebrow">SUBURBAN MUTUAL INSURANCE · CLAIMS DIVISION</div><h2>ROUTE COMPLETE</h2><div class="report" id="report"></div><p id="resultQuote"></p><div class="buttons"><button id="again" class="primary">RIDE AGAIN</button><button class="fullscreen">⛶ FULLSCREEN</button></div></section>
+    <div id="touch" class="hidden"><div id="moveStick" class="stick"><div class="nub"></div><span>STEER</span></div><div class="touchActions"><button id="touchBrake">BRAKE</button><button id="touchBoost">BURST</button><button id="touchSwitch">◀ PAPER ▶</button></div><div id="aimStick" class="stick"><div class="nub"></div><span>AIM · RELEASE TO THROW</span></div></div>
+    <div id="rotate" class="hidden">ROTATE DEVICE TO LANDSCAPE<br><small>FULLSCREEN MAY LOCK THE ORIENTATION</small></div>
+  </main>
+  <script type="module" src="src/game.js"></script>
+</body></html>
